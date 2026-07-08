@@ -11,18 +11,17 @@ from database import SessionLocal, engine
 SERVICE_URL = os.getenv("SERVICE_URL", "localhost:8001")  
 ALGORITHM = "HS256"
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+SECRET_KEY: str = os.getenv("JWT_SECRET_KEY") or (
+    "local_dev_secret_key_only" if os.getenv("ENV") == "development" else ""
+)
 if not SECRET_KEY:
-    if os.getenv("ENV") == "development":
-        SECRET_KEY = "local_dev_secret_key_only"
-    else:
-        raise RuntimeError("JWT_SECRET_KEY must be set in production!")
+    raise RuntimeError("JWT_SECRET_KEY must be set in production!")
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{SERVICE_URL}/login") 
 
 models.Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Calorie & Macro Tracker API")
+app = FastAPI(title="Calorie & Macro Tracker API", root_path="/v1")
 
 def get_db():
     db = SessionLocal()
@@ -39,10 +38,12 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        subject = payload.get("sub")
+
+        if not isinstance(subject, str):
             raise credentials_exception
-        return int(user_id)
+
+        return int(subject)
     except (JWTError, ValueError):
         raise credentials_exception
 

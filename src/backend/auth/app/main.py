@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from typing import Dict
+from typing import Any, Dict
 from jose import jwt, JWTError
 from passlib import context
 
@@ -14,12 +14,12 @@ from database import SessionLocal
 pwd_context = context.CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login") # Assumes standard OAuth2 path
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+SECRET_KEY: str = os.getenv("JWT_SECRET_KEY") or (
+    "local_dev_secret_key_only" if os.getenv("ENV") == "development" else ""
+)
+
 if not SECRET_KEY:
-    if os.getenv("ENV") == "development":
-        SECRET_KEY = "local_dev_secret_key_only"
-    else:
-        raise RuntimeError("JWT_SECRET_KEY must be set in production!")
+    raise RuntimeError("JWT_SECRET_KEY must be set in production!")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
@@ -30,13 +30,14 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed_password: str) -> bool:
     return pwd_context.verify(password, hashed_password)
 
-def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    effective_delta = expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + effective_delta
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-auth = FastAPI(title="Calorie & Macro Tracker API")
+auth = FastAPI(title="Calorie & Macro Tracker API", root_path="/auth")
 
 def get_db():
     db = SessionLocal()
@@ -53,7 +54,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
+        subject = payload.get("sub")
+        if not isinstance(subject, str):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user_id = int(subject)
         if user_id is None:
             raise credentials_exception
         user_id_int = int(user_id)

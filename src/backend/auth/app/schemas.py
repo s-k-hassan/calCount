@@ -11,3 +11,7 @@ class UserResponse(UserCreate):
 
     class Config:
         from_attributes = True
+
+class UserPasswordChange(BaseModel):
+    current_password: str
+    new_password: str

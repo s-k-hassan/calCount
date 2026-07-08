@@ -1,11 +1,10 @@
 services:
-
   nginx-proxy:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
-      - "80:80" # The ONLY public gateway into your system now
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - "80:80"
     depends_on:
       - auth-service
       - crud-service
