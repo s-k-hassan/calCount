@@ -2,4 +2,4 @@ fastapi==0.139.0
 pydantic==2.13.4
 python_jose==3.5.0
 SQLAlchemy==2.0.51
-uvicorn==0.50.2
+uvicorn==0.51.0

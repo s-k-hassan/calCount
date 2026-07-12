@@ -7,7 +7,8 @@ services:
       - "80:80"
     depends_on:
       - auth-service
-      - crud-service
+      - api-service
+      - web-service
 
   auth-service:
     build:
@@ -16,9 +17,9 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=${AUTH_DATABASE_URL} # Remaps to the auth-specific DB string
+      - DATABASE_URL=${AUTH_DATABASE_URL}
 
-  crud-service:
+  api-service:
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -27,8 +28,19 @@ services:
     depends_on:
       - auth-service
     environment:
-      - DATABASE_URL=${CRUD_DATABASE_URL} # Remaps to the crud-specific DB string
+      - DATABASE_URL=${API_DATABASE_URL}
+
+  web-service:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - api-service
+    environment:
+      - DATABASE_URL=${API_DATABASE_URL}
 
 volumes:
   auth_db_data:
-  crud_db_data:
+  api_db_data:

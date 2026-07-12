@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}CalCount{% endblock %}</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f7f8fc;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: white;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        nav a {
+            margin-left: 1rem;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero,
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            color: var(--muted);
+            margin-bottom: 1.25rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        form {
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        input {
+            padding: 0.8rem 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .message {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            background: #ecfdf3;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">CalCount</div>
+        <nav>
+            <a href="/">Home</a>
+            {% if request.session.user_email %}
+            <a href="/home">Dashboard</a>
+            <a href="/logout">Logout</a>
+            {% else %}
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>

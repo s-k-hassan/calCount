@@ -9,7 +9,9 @@ from passlib import context
 
 import models
 import schemas
-from database import SessionLocal
+from database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
 
 pwd_context = context.CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login") # Assumes standard OAuth2 path

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}CalCount | Login{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h2>Welcome back</h2>
+    <p class="muted">Sign in to continue tracking your meals.</p>
+
+    {% if message %}
+    <p class="message">{{ message }}</p>
+    {% endif %}
+
+    <form id="login-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{ email or '' }}" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required />
+
+        <button class="btn btn-primary" type="submit">Continue</button>
+    </form>
+
+    <script>
+        const form = document.getElementById("login-form");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const payload = {
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                window.location.href = "/home";
+            } else {
+                const message =
+                    (typeof data?.detail === "string" && data.detail) ||
+                    data?.message ||
+                    "Login failed";
+                alert(message);
+            }
+        });
+    </script>
+
+    <p class="muted">No account yet? <a href="/register">Create one</a>.</p>
+</section>
+{% endblock %}
