@@ -36,37 +36,4 @@
         <button class="btn btn-primary" type="submit">Save log</button>
     </form>
 </section>
-
-<section class="card" style="margin-top: 1.5rem;">
-    <h2>Recent logs</h2>
-
-    {% if logs %}
-    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-        <thead>
-            <tr style="text-align: left; border-bottom: 1px solid #e5e7eb;">
-                <th style="padding: 0.6rem;">Date</th>
-                <th style="padding: 0.6rem;">Food</th>
-                <th style="padding: 0.6rem;">Calories</th>
-                <th style="padding: 0.6rem;">Protein</th>
-                <th style="padding: 0.6rem;">Carbs</th>
-                <th style="padding: 0.6rem;">Fats</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in logs %}
-            <tr style="border-bottom: 1px solid #f3f4f6;">
-                <td style="padding: 0.6rem;">{{ entry.date }}</td>
-                <td style="padding: 0.6rem;">{{ entry.food_name }}</td>
-                <td style="padding: 0.6rem;">{{ entry.calories }}</td>
-                <td style="padding: 0.6rem;">{{ entry.protein }}g</td>
-                <td style="padding: 0.6rem;">{{ entry.carbs }}g</td>
-                <td style="padding: 0.6rem;">{{ entry.fats }}g</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p class="muted">No logs yet. Add your first meal above.</p>
-    {% endif %}
-</section>
 {% endblock %}

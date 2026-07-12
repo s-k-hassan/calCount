@@ -1,10 +1,10 @@
-import json
+# import json
 import os
-from datetime import date, timedelta
+# from datetime import date, timedelta
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import Request as UrlRequest, urlopen
+# from urllib.error import HTTPError, URLError
+# from urllib.parse import urlencode
+# from urllib.request import Request as UrlRequest, urlopen
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -12,6 +12,11 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from typing import Any
+
+from helpers import (
+    authenticate_with_auth_service, 
+    create_food_log, 
+    get_recent_logs_from_api)
 
 app = FastAPI(title="CalCount Web")
 app.add_middleware(SessionMiddleware, secret_key="calcount-dev-secret", https_only=False)
@@ -21,83 +26,6 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://api-service:8000")
-
-def authenticate_with_auth_service(email: str, password: str):
-    payload = json.dumps({"email": email, "password": password}).encode("utf-8")
-    req = UrlRequest(
-        f"{AUTH_SERVICE_URL}/login",
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
-    try:
-        with urlopen(req, timeout=5) as response:
-            body = response.read().decode("utf-8")
-            return response.status, json.loads(body) if body else {}
-    except HTTPError as exc:
-        body = exc.read().decode("utf-8")
-        try:
-            return exc.code, json.loads(body)
-        except Exception:
-            return exc.code, {"detail": body}
-    except URLError:
-        return 502, {"detail": "Authentication service unavailable"}
-    
-def _call_api(method: str, path: str, token: str | None = None, payload: dict[str, Any] | None = None):
-    headers: dict[str, str] = {}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-
-    body = None
-    if payload is not None:
-        headers["Content-Type"] = "application/json"
-        body = json.dumps(payload).encode("utf-8")
-
-    req = UrlRequest(
-        f"{API_SERVICE_URL}{path}",
-        data=body,
-        headers=headers,
-        method=method,
-    )
-
-    try:
-        with urlopen(req, timeout=5) as response:
-            response_body = response.read().decode("utf-8")
-            return response.status, json.loads(response_body) if response_body else {}
-    except HTTPError as exc:
-        response_body = exc.read().decode("utf-8")
-        try:
-            return exc.code, json.loads(response_body)
-        except Exception:
-            return exc.code, {"detail": response_body}
-    except URLError:
-        return 502, {"detail": "API service unavailable"}
-
-
-def create_food_log(token: str, payload: dict[str, Any]):
-    return _call_api("POST", "/logs", token=token, payload=payload)
-
-
-def fetch_logs_for_date(token: str, day: str):
-    query = urlencode({"date": day})
-    return _call_api("GET", f"/logs?{query}", token=token)
-
-
-def get_recent_logs_from_api(request: Request) -> list[dict[str, Any]]:
-    token = request.session.get("access_token", "")
-    if not token:
-        return []
-
-    logs: list[dict[str, Any]] = []
-    for offset in range(7):
-        day = (date.today() - timedelta(days=offset)).isoformat()
-        status_code, data = fetch_logs_for_date(token, day)
-        if status_code == 200 and isinstance(data, list):
-            logs.extend(data)
-
-    logs.sort(key=lambda item: item.get("date", ""), reverse=True)
-    return logs[:7]
 
 @app.get("/", include_in_schema=False)
 def index(request: Request):
@@ -238,6 +166,23 @@ def home_page(request: Request):
         },
     )
 
+@app.get("/dashboard", include_in_schema=False)
+def dashboard_page(request: Request):
+    user_email = request.session.get("user_email")
+    if not user_email:
+        return RedirectResponse("/login", status_code=303)
+
+    logs = get_recent_logs_from_api(request)
+
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {
+            "request": request,
+            "user_email": user_email,
+            "logs": logs,
+        },
+    )
 
 @app.get("/logout", include_in_schema=False)
 def logout(request: Request):
