@@ -1,31 +1,51 @@
 # import json
 import os
-# from datetime import date, timedelta
 from pathlib import Path
-# from urllib.error import HTTPError, URLError
-# from urllib.parse import urlencode
-# from urllib.request import Request as UrlRequest, urlopen
-
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-
 from typing import Any
 
 from helpers import (
-    authenticate_with_auth_service, 
-    create_food_log, 
-    get_recent_logs_from_api)
+    authenticate_with_auth_service,
+    create_food_log,
+    get_recent_logs_from_api,
+)
+
+## Begin Logging Engine
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+import logging, logging.config, yaml
+from pathlib import Path
+
+baseDir = Path(__file__).resolve().parent
+config_path = baseDir / "logging_config.yaml"
+otelEndpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "none")
+if otelEndpoint != "none":
+    logger_provider = LoggerProvider()
+    set_logger_provider(logger_provider)
+    exporter = OTLPLogExporter(endpoint=otelEndpoint, insecure=True)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+with open(config_path, "r") as configFile:
+    config = yaml.safe_load(configFile.read())
+    logging.config.dictConfig(config)
+logger = logging.getLogger("loggerJSON")
+## End Logging Engine
 
 app = FastAPI(title="CalCount Web")
-app.add_middleware(SessionMiddleware, secret_key="calcount-dev-secret", https_only=False)
+app.add_middleware(
+    SessionMiddleware, secret_key="calcount-dev-secret", https_only=False
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://api-service:8000")
+
 
 @app.get("/", include_in_schema=False)
 def index(request: Request):
@@ -118,7 +138,6 @@ async def add_log(request: Request):
     date_value = form.get("date")
     food_name_value = form.get("food_name")
 
-    
     def _as_int(value: Any) -> int:
         if isinstance(value, str):
             return int(value) if value.strip() else 0
@@ -128,7 +147,9 @@ async def add_log(request: Request):
 
     payload = {
         "date": date_value.strip() if isinstance(date_value, str) else "",
-        "food_name": food_name_value.strip() if isinstance(food_name_value, str) else "",
+        "food_name": (
+            food_name_value.strip() if isinstance(food_name_value, str) else ""
+        ),
         "calories": _as_int(form.get("calories")),
         "protein": _as_int(form.get("protein")),
         "carbs": _as_int(form.get("carbs")),
@@ -166,6 +187,7 @@ def home_page(request: Request):
         },
     )
 
+
 @app.get("/dashboard", include_in_schema=False)
 def dashboard_page(request: Request):
     user_email = request.session.get("user_email")
@@ -183,6 +205,7 @@ def dashboard_page(request: Request):
             "logs": logs,
         },
     )
+
 
 @app.get("/logout", include_in_schema=False)
 def logout(request: Request):

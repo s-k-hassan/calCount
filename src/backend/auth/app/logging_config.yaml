@@ -1,0 +1,50 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+  baseformatter:
+    format: "[%(levelname)s] %(asctime)s %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S %z"
+
+  formatterJSON:
+    "()": pythonjsonlogger.jsonlogger.JsonFormatter
+    format: "{levelname},{asctime},{msg}"
+    style: "{"
+    datefmt: "%d-%b-%Y %H:%M:%S %z"
+    rename_fields:
+      levelname: "severity"
+      asctime: "timestamp"
+      msg: "message"
+
+handlers:
+  handlerBaseformatter:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: baseformatter
+    stream: ext://sys.stdout
+
+  handlerJSON:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: formatterJSON
+    stream: ext://sys.stdout
+
+  otelJSON:
+    class: opentelemetry.sdk._logs.LoggingHandler
+    level: INFO
+    formatter: formatterJSON
+
+loggers:
+  loggerBaseformatter:
+    level: INFO
+    handlers: [handlerBaseformatter]
+    propagate: no
+
+  loggerJSON:
+    level: INFO
+    handlers: [handlerJSON, otelJSON]
+    propagate: no
+
+root:
+  level: INFO
+  handlers: [handlerBaseformatter]

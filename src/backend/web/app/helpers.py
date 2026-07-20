@@ -4,22 +4,38 @@ from datetime import date, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request as UrlRequest, urlopen
-
 from fastapi import Request
-
 from typing import Any
 
-import logging
+import logging, logging.config
+from pythonjsonlogger.json import JsonFormatter
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-logging.info("This is an info message")
+## Begin Logging Engine
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from pythonjsonlogger.json import JsonFormatter
+import logging, logging.config, yaml
+from pathlib import Path
+
+baseDir = Path(__file__).resolve().parent
+config_path = baseDir / "logging_config.yaml"
+otelEndpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "none")
+if otelEndpoint != "none":
+    logger_provider = LoggerProvider()
+    set_logger_provider(logger_provider)
+    exporter = OTLPLogExporter(endpoint=otelEndpoint, insecure=True)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+with open(config_path, "r") as configFile:
+    config = yaml.safe_load(configFile.read())
+    logging.config.dictConfig(config)
+logger = logging.getLogger("loggerJSON")
+## End Logging Engine
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://api-service:8000")
+
 
 def authenticate_with_auth_service(email: str, password: str):
     payload = json.dumps({"email": email, "password": password}).encode("utf-8")
@@ -42,8 +58,14 @@ def authenticate_with_auth_service(email: str, password: str):
             return exc.code, {"detail": body}
     except URLError:
         return 502, {"detail": "Authentication service unavailable"}
-    
-def _call_api(method: str, path: str, token: str | None = None, payload: dict[str, Any] | None = None):
+
+
+def _call_api(
+    method: str,
+    path: str,
+    token: str | None = None,
+    payload: dict[str, Any] | None = None,
+):
     headers: dict[str, str] = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -76,14 +98,18 @@ def _call_api(method: str, path: str, token: str | None = None, payload: dict[st
 
 def create_food_log(token: str, payload: dict[str, Any]):
     status_code, data = _call_api("POST", "/logs", token=token, payload=payload)
-    logging.info("create_food_log status=%s payload=%s response=%s", status_code, payload, data)
+    logging.info(
+        "create_food_log status=%s payload=%s response=%s", status_code, payload, data
+    )
     return status_code, data
 
 
 def fetch_logs_for_date(token: str, day: str):
     query = urlencode({"date": day})
     status_code, data = _call_api("GET", f"/logs?{query}", token=token)
-    logging.info("fetch_logs_for_date day=%s status=%s response=%s", day, status_code, data)
+    logging.info(
+        "fetch_logs_for_date day=%s status=%s response=%s", day, status_code, data
+    )
     return _call_api("GET", f"/logs?{query}", token=token)
 
 

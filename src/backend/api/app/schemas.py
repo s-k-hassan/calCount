@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class FoodLogCreate(BaseModel):
     date: str
     food_name: str
@@ -7,6 +8,7 @@ class FoodLogCreate(BaseModel):
     protein: int
     carbs: int
     fats: int
+
 
 class FoodLogResponse(FoodLogCreate):
     id: int
