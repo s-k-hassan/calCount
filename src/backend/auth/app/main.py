@@ -50,7 +50,7 @@ if not SECRET_KEY:
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 logger.log(
-    level=10,
+    level=20,
     msg="ENV variables",
     extra={"algorithm": ALGORITHM, "access_token_expiry": ACCESS_TOKEN_EXPIRE_MINUTES},
 )

@@ -45,6 +45,11 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://api-service:8000")
+logger.log(
+    level=20,
+    msg="ENV variables",
+    extra={"AUTH_SERVICE_URL": AUTH_SERVICE_URL, "API_SERVICE_URL": API_SERVICE_URL},
+)
 
 
 @app.get("/", include_in_schema=False)
@@ -86,6 +91,7 @@ async def login_submit(request: Request):
     if status_code == 200:
         request.session["user_email"] = email
         request.session["access_token"] = data.get("access_token", "")
+        logger.info(msg="User Login", extra={"email": email})
         return JSONResponse({"ok": True, "redirect": "/home"})
 
     message = data.get("detail") if isinstance(data, dict) else str(data)
@@ -126,6 +132,7 @@ async def register_submit(request: Request):
         )
 
     request.session["user_email"] = email
+    logger.info(msg="User Created", extra={"email": email})
     return JSONResponse({"ok": True, "redirect": "/home"})
 
 
@@ -163,6 +170,20 @@ async def add_log(request: Request):
     status_code, data = create_food_log(token, payload)
 
     if status_code in (200, 201):
+        logger.info(
+            msg="Food Logged",
+            extra={
+                "email": request.session.get("user_email"),
+                "entry_date": payload["date"],
+                "details": payload["food_name"],
+                "nutrition": {
+                    "calories": payload["calories"],
+                    "protein": payload["protein"],
+                    "fats": payload["fats"],
+                    "carbs": payload["carbs"],
+                },
+            },
+        )
         return RedirectResponse("/home", status_code=303)
 
     message = data.get("detail") if isinstance(data, dict) else str(data)

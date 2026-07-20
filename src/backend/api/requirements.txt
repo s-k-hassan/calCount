@@ -5,4 +5,4 @@ python_json_logger==4.1.0
 PyYAML==6.0.3
 SQLAlchemy==2.0.51
 uvicorn==0.51.0
-opentelemetry-exporter-otlp-proto-grpc==1.44.0
+opentelemetry-exporter-otlp==1.44.0

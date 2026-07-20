@@ -5,6 +5,6 @@ uvicorn==0.51.0
 itsdangerous==2.2.0
 urllib3==2.7.0
 python-multipart==0.0.32
-opentelemetry-exporter-otlp-proto-grpc==1.44.0
+opentelemetry-exporter-otlp==1.44.0
 python_json_logger==4.1.0
 PyYAML==6.0.3
