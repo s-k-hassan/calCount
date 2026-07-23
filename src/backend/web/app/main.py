@@ -187,15 +187,12 @@ def home_page(request: Request):
     if not user_email:
         return RedirectResponse("/login", status_code=303)
 
-    logs = get_recent_logs_from_api(request)
-
     return templates.TemplateResponse(
         request,
         "home.html",
         {
             "request": request,
             "user_email": user_email,
-            "logs": logs,
         },
     )
 
