@@ -28,11 +28,3 @@ service:
       receivers: [otlp]
       processors: [memory_limiter]
       exporters: [debug, otlp]
-    metrics:
-      receivers: [otlp]
-      processors: [memory_limiter]
-      exporters: [debug, otlp]
-    logs:
-      receivers: [otlp]
-      processors: [memory_limiter]
-      exporters: [debug, otlp]
