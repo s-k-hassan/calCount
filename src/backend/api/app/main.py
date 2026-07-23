@@ -8,22 +8,12 @@ import models as models, schemas as schemas
 from database import SessionLocal, engine
 
 ## Begin Logging Engine
-from opentelemetry._logs import set_logger_provider
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from pythonjsonlogger.json import JsonFormatter
 import logging, logging.config, yaml
 from pathlib import Path
 
 baseDir = Path(__file__).resolve().parent
 config_path = baseDir / "logging_config.yaml"
-otelEndpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "none")
-if otelEndpoint != "none":
-    logger_provider = LoggerProvider()
-    set_logger_provider(logger_provider)
-    exporter = OTLPLogExporter(endpoint=otelEndpoint, insecure=True)
-    logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
 with open(config_path, "r") as configFile:
     config = yaml.safe_load(configFile.read())
     logging.config.dictConfig(config)
@@ -31,7 +21,7 @@ logger = logging.getLogger("loggerJSON")
 ## End Logging Engine
 
 # --- SECURITY SCHEME ---
-SERVICE_URL = os.getenv("SERVICE_URL", "localhost:8001")
+SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "localhost:8001")
 ALGORITHM = "HS256"
 
 SECRET_KEY: str = os.getenv("JWT_SECRET_KEY") or (
@@ -39,7 +29,6 @@ SECRET_KEY: str = os.getenv("JWT_SECRET_KEY") or (
 )
 if not SECRET_KEY:
     raise RuntimeError("JWT_SECRET_KEY must be set in production!")
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{SERVICE_URL}/login")
 

@@ -11,22 +11,12 @@ import logging, logging.config
 from pythonjsonlogger.json import JsonFormatter
 
 ## Begin Logging Engine
-from opentelemetry._logs import set_logger_provider
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from pythonjsonlogger.json import JsonFormatter
 import logging, logging.config, yaml
 from pathlib import Path
 
 baseDir = Path(__file__).resolve().parent
 config_path = baseDir / "logging_config.yaml"
-otelEndpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "none")
-if otelEndpoint != "none":
-    logger_provider = LoggerProvider()
-    set_logger_provider(logger_provider)
-    exporter = OTLPLogExporter(endpoint=otelEndpoint, insecure=True)
-    logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
 with open(config_path, "r") as configFile:
     config = yaml.safe_load(configFile.read())
     logging.config.dictConfig(config)

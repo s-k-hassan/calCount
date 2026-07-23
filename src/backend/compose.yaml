@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    networks:
+      - otel-net
 
   auth-service:
     build:
@@ -14,6 +16,9 @@ services:
       - .env
     environment:
       - DATABASE_URL=${AUTH_DATABASE_URL}
+      - OTEL_SERVICE_NAME=auth-service
+    networks:
+      - otel-net
 
   api-service:
     build:
@@ -25,6 +30,9 @@ services:
       - auth-service
     environment:
       - DATABASE_URL=${API_DATABASE_URL}
+      - OTEL_SERVICE_NAME=api-service
+    networks:
+      - otel-net
 
   web-service:
     build:
@@ -32,11 +40,24 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
+    environment:
+      - OTEL_SERVICE_NAME=web-service
     depends_on:
       - api-service
-    environment:
-      - DATABASE_URL=${API_DATABASE_URL}
+    networks:
+      - otel-net
+
+  otel-collector:
+    build:
+      context: ./otel-collector
+      dockerfile: Dockerfile
+    networks:
+      - otel-net
 
 volumes:
   auth_db_data:
   api_db_data:
+
+networks:
+  otel-net:
+    driver: bridge
