@@ -5,26 +5,50 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  fluentforward:
-    endpoint: 0.0.0.0:24224
 
 processors:
   memory_limiter:
     limit_mib: 1536
     spike_limit_mib: 512
     check_interval: 5s
+  batch:
+    timeout: 10s
+
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: resource
+        statements:
+          - set(attributes["deployment.environment"], "${DD_ENV_TAG}")
+
+connectors:
+  datadog/connector:
 
 exporters:
+  datadog:
+    hostname: test-host
+    api:
+      site: datadoghq.com
+      key: ${DD_API_KEY}
+      fail_on_invalid_key: true
+    tls:
+      insecure_skip_verify: true
   debug:
     verbosity: detailed
-  otlp:
-    endpoint: aspire-dashboard:18889
-    tls:
-      insecure: true
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter]
-      exporters: [debug, otlp]
+      processors: [transform, memory_limiter, batch]
+      exporters: [debug, datadog/connector]
+
+    traces/2:
+      receivers: [datadog/connector]
+      processors: [memory_limiter, batch]
+      exporters: [datadog]
+
+    metrics:
+      receivers: [datadog/connector]
+      processors: [memory_limiter, batch]
+      exporters: [datadog]

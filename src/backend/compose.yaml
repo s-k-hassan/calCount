@@ -53,6 +53,8 @@ services:
       dockerfile: Dockerfile
     networks:
       - otel-net
+    env_file:
+      - .env
 
 volumes:
   auth_db_data:
