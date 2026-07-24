@@ -28,9 +28,19 @@ services:
       - .env
     depends_on:
       - auth-service
+      - api-database
     environment:
       - DATABASE_URL=${API_DATABASE_URL}
       - OTEL_SERVICE_NAME=api-service
+    networks:
+      - otel-net
+    
+  api-database:
+    image: postgres
+    env_file:
+      .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
     networks:
       - otel-net
 

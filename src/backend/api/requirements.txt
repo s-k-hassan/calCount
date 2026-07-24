@@ -8,4 +8,4 @@ uvicorn==0.51.0
 opentelemetry-distro==0.65b0
 opentelemetry-exporter-otlp-proto-common==1.44.0
 opentelemetry-exporter-otlp==1.44.0
-# opentelemetry-bootstrap
+psycopg2-binary==2.9.12

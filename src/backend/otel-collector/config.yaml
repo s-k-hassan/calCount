@@ -6,6 +6,22 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
 
+  postgresql:
+    endpoint: api-database:5432
+    transport: tcp
+    username: ${env:POSTGRES_USER}
+    password: ${env:POSTGRES_PASSWORD}
+    databases:
+      - ${POSTGRES_DB_NAME}
+    collection_interval: 10s
+    tls:
+      insecure: true
+    events:
+      db.server.query_sample:
+        enabled: true
+      db.server.top_query:
+        enabled: true
+
 processors:
   memory_limiter:
     limit_mib: 1536
@@ -49,6 +65,6 @@ service:
       exporters: [datadog]
 
     metrics:
-      receivers: [datadog/connector]
+      receivers: [datadog/connector, postgresql]
       processors: [memory_limiter, batch]
       exporters: [datadog]
