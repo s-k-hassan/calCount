@@ -30,12 +30,12 @@ processors:
   batch:
     timeout: 10s
 
-  transform:
+  transform/datadogTransform:
     error_mode: ignore
     trace_statements:
       - context: resource
         statements:
-          - set(attributes["deployment.environment"], "${DD_ENV_TAG}")
+          - set(resource.attributes["deployment.environment"], "${ENV}")
 
 connectors:
   datadog/connector:
@@ -52,19 +52,35 @@ exporters:
   debug:
     verbosity: detailed
 
+  otlp_grpc/clickstack:
+    endpoint: ${CLICKSTACK_URL}
+    compression: gzip
+    tls:
+      insecure: true
+
 service:
   pipelines:
-    traces:
+    traces/datadogStage1:
       receivers: [otlp]
-      processors: [transform, memory_limiter, batch]
+      processors: [transform/datadogTransform, memory_limiter, batch]
       exporters: [debug, datadog/connector]
 
-    traces/2:
+    traces/datadogStage2:
       receivers: [datadog/connector]
       processors: [memory_limiter, batch]
       exporters: [datadog]
 
-    metrics:
+    metrics/datadogMetrics:
       receivers: [datadog/connector, postgresql]
       processors: [memory_limiter, batch]
       exporters: [datadog]
+
+    traces/clickstack:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug, otlp_grpc/clickstack]
+
+    metrics/clickstackPostgres:
+      receivers: [postgresql]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_grpc/clickstack]

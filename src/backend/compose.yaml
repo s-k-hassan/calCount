@@ -30,7 +30,6 @@ services:
       - auth-service
       - api-database
     environment:
-      - DATABASE_URL=${API_DATABASE_URL}
       - OTEL_SERVICE_NAME=api-service
     networks:
       - otel-net
