@@ -46,7 +46,7 @@ exporters:
     api:
       site: datadoghq.com
       key: ${DD_API_KEY}
-      fail_on_invalid_key: true
+      fail_on_invalid_key: false
     tls:
       insecure_skip_verify: true
   debug:
