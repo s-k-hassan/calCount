@@ -52,12 +52,6 @@ exporters:
   debug:
     verbosity: detailed
 
-  otlp_grpc/clickstack:
-    endpoint: ${CLICKSTACK_URL}
-    compression: gzip
-    tls:
-      insecure: true
-
 service:
   pipelines:
     traces/datadogStage1:
@@ -74,13 +68,3 @@ service:
       receivers: [datadog/connector, postgresql]
       processors: [memory_limiter, batch]
       exporters: [datadog]
-
-    traces/clickstack:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [debug, otlp_grpc/clickstack]
-
-    metrics/clickstackPostgres:
-      receivers: [postgresql]
-      processors: [memory_limiter, batch]
-      exporters: [otlp_grpc/clickstack]
