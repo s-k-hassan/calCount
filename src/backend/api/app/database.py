@@ -5,7 +5,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # 1. Get environment variables (with fallback defaults for local testing)
 DATABASE_TYPE = os.getenv("DATABASE_TYPE", "sqlite")
 
-
 connect_args = {}
 match DATABASE_TYPE:
     case "sqlite":

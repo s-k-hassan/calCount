@@ -4,11 +4,17 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 # 1. Get environment variables (with fallback defaults for local testing)
 DATABASE_TYPE = os.getenv("DATABASE_TYPE", "sqlite")
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./auth.db")
 
 connect_args = {}
-if DATABASE_TYPE == "sqlite":
-    connect_args = {"check_same_thread": False}
+match DATABASE_TYPE:
+    case "sqlite":
+        DATABASE_URL = "sqlite:///./tracker.db"
+        connect_args = {"check_same_thread": False}
+    case "postgres":
+        POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+        POSTGRES_USER = os.getenv("POSTGRES_USER")
+        POSTGRES_DB_NAME = os.getenv("POSTGRES_DB_NAME")
+        DATABASE_URL = f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@auth-database/{POSTGRES_DB_NAME}"
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
