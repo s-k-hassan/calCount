@@ -1,0 +1,72 @@
+name: Build and Push Docker Images
+
+on:
+    push:
+        branches: ["master"]
+        paths:
+            - "src/backend/**"
+
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    detect-changes:
+        runs-on: ubuntu-latest
+        outputs:
+            services: ${{ steps.filter.outputs.changes }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Check for changes in backend subdirectories
+              id: filter
+              uses: dorny/paths-filter@v3
+              with:
+                  filters: |
+                      api: 'src/backend/api/**'
+                      auth: 'src/backend/auth/**'
+                      nginx: 'src/backend/nginx/**'
+                      otel-collector: 'src/backend/otel-collector/**'
+                      web: 'src/backend/web/**'
+
+    build-and-push:
+        needs: detect-changes
+        if: ${{ needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' }}
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
+            fail-fast: false
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract Docker metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,format=short
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./src/backend/${{ matrix.service }}
+                  file: ./src/backend/${{ matrix.service }}/Dockerfile
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
