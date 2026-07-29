@@ -5,6 +5,20 @@ on:
         branches: ["master"]
         paths:
             - "src/backend/**"
+    workflow_dispatch:
+        inputs:
+            service_to_build:
+                description: 'Which service to build? (Select "all" or a specific service)'
+                required: true
+                default: "all"
+                type: choice
+                options:
+                    - all
+                    - api
+                    - auth
+                    - nginx
+                    - otel-collector
+                    - web
 
 permissions:
     contents: read
