@@ -20,6 +20,15 @@ services:
     networks:
       - otel-net
 
+  auth-database:
+    image: postgres
+    env_file:
+      .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
+    networks:
+      - otel-net
+
   api-service:
     build:
       context: ./api
