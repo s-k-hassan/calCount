@@ -37,6 +37,7 @@ processors:
         statements:
           - set(resource.attributes["deployment.environment"], "${ENV}")
 
+exporters:
   otlp:
     endpoint: ${CLUSTER_OTEL_COLLECTOR_ENDPOINT}
     tls:
