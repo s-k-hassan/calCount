@@ -36,6 +36,7 @@ processors:
       - context: resource
         statements:
           - set(resource.attributes["deployment.environment"], "${ENV}")
+          - set(resource.attributes["service.name"], "fallback-service-name") where resource.attributes["service.name"] == nil
 
 exporters:
   otlp:
