@@ -37,34 +37,24 @@ processors:
         statements:
           - set(resource.attributes["deployment.environment"], "${ENV}")
 
-connectors:
-  datadog/connector:
-
-exporters:
-  datadog:
-    hostname: test-host
-    api:
-      site: datadoghq.com
-      key: ${DD_API_KEY}
-      fail_on_invalid_key: false
+  otlp:
+    endpoint: ${CLUSTER_OTEL_COLLECTOR_ENDPOINT}
     tls:
-      insecure_skip_verify: true
-  debug:
-    verbosity: detailed
+      insecure: true
 
 service:
   pipelines:
-    traces/datadogStage1:
+    traces:
       receivers: [otlp]
       processors: [transform/datadogTransform, memory_limiter, batch]
-      exporters: [debug, datadog/connector]
+      exporters: [otlp]
 
-    traces/datadogStage2:
-      receivers: [datadog/connector]
+    metrics:
+      receivers: [otlp, postgresql]
       processors: [memory_limiter, batch]
-      exporters: [datadog]
+      exporters: [otlp]
 
-    metrics/datadogMetrics:
-      receivers: [datadog/connector, postgresql]
+    logs:
+      receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [datadog]
+      exporters: [otlp]
