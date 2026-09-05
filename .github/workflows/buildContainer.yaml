@@ -77,7 +77,7 @@ jobs:
               id: meta
               uses: docker/metadata-action@v5
               with:
-                  images: ghcr.io/${{ github.repository }}
+                  images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
                   tags: |
                       type=raw,value=${{ steps.timestamp.outputs.date }}-${{ github.sha }}
                       type=ref,event=branch
