@@ -81,7 +81,12 @@ jobs:
                   tags: |
                       type=raw,value=${{ steps.timestamp.outputs.date }}-${{ github.sha }}
                       type=ref,event=branch
+<<<<<<< HEAD
                       type=raw,value=latest
+=======
+                      type=sha,format=short
+                      type=raw, value=latest
+>>>>>>> 682e087334d5ea50661729ff8d1c64ffc8da0b28
 
             - name: Build and push Docker image
               uses: docker/build-push-action@v6
