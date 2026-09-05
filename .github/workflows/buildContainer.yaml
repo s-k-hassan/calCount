@@ -67,14 +67,21 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
+            # Step 3.5: Generate ISO Timestamp
+            - name: Generate Timestamp
+              id: timestamp
+              run: echo "date=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
+            # Step 4: Extract Docker metadata
             - name: Extract Docker metadata
               id: meta
               uses: docker/metadata-action@v5
               with:
-                  images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+                  images: ghcr.io/${{ github.repository }}
                   tags: |
+                      type=raw,value=${{ steps.timestamp.outputs.date }}-${{ github.sha }}
                       type=ref,event=branch
-                      type=sha,format=short
+                      type=raw,value=latest
 
             - name: Build and push Docker image
               uses: docker/build-push-action@v6
